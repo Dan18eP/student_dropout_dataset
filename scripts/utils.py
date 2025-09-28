@@ -1,19 +1,19 @@
-#Script to generate a synthetic dataset for predicting future student dropout.
-#Authors: Daniel Echeverría, Andrés Negrete
-#University: Universidad de la Costa
-#Date: 2025-09-26
+# Script to generate a synthetic dataset for predicting future student dropout.
+# Authors: Daniel Echeverría, Andrés Negrete
+# University: Universidad de la Costa
+# Date: 2025-09-26
 
-#Import necessary libraries
+# Import necessary libraries
 import numpy as np
 import pandas as pd
 import random
 import os
 
-#Configuration
-NUM_RECORDS = 500  #Minimum number of rows required
+# Configuration
+NUM_RECORDS = 500  # Minimum number of rows required
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "dataset_dropout.csv")
 
-#Ensure reproducibility
+# Ensure reproducibility
 np.random.seed(42)
 
 def introduce_nulls(df, columns, null_percentage=None):
@@ -46,47 +46,79 @@ def introduce_outliers(df, n_std=3, contamination_rate=0.05):
     """
     num_outliers = int(len(df) * contamination_rate)
     
-    for column in ['age', 'high_school_gpa', 'admission_exam_score']:
-        #Calculate statistical measures
+    for column in ['age', 'high_school_gpa', 'admission_exam_score', 'first_semester_gpa']:
+        # Skip if column is all NaN
+        if df[column].isna().all():
+            continue
+            
+        # Calculate statistical measures
         median = df[column].median()
         q1 = df[column].quantile(0.25)
         q3 = df[column].quantile(0.75)
         iqr = q3 - q1
         
-        #Define outlier bounds
+        # Define outlier bounds
         lower_bound = q1 - (n_std * iqr)
         upper_bound = q3 + (n_std * iqr)
         
-        #Generate outliers
+        # Generate outliers
         if column == 'age':
-            outliers = np.array(
-                np.random.choice(
-                    list(range(int(lower_bound-5), int(q1-2))) + 
-                    list(range(int(q3+2), int(upper_bound+5))),
-                    size=num_outliers
-                ),
-                dtype=np.int32
-            )
-        elif column == 'high_school_gpa':
-            outliers = np.array(
-                np.random.uniform(
-                    low=max(0, lower_bound-0.5),
-                    high=min(5.0, upper_bound+0.5),
-                    size=num_outliers
-                ),
-                dtype=np.float32
-            )
-        else:  # admission_exam_score   
-            outliers = np.array(
-                np.random.choice(
-                    list(range(int(lower_bound-10), int(q1-5))) + 
-                    list(range(int(q3+5), min(100, int(upper_bound+10)))),
-                    size=num_outliers
-                ),
-                dtype=np.int32
-            )
+            # Generate outliers for both very young and older students
+            young_outliers = list(range(14, 16))  # Outliers between 14 and 15 years
+            older_outliers = list(range(30, 51))  # Outliers between 30 and 50 years
+            all_outliers = young_outliers + older_outliers
             
-        #Insert outliers
+            # Split outliers: 30% young, 70% older
+            young_count = int(num_outliers * 0.3)
+            older_count = num_outliers - young_count
+            
+            outliers = np.array(
+                np.random.choice(young_outliers, size=young_count).tolist() +
+                np.random.choice(older_outliers, size=older_count).tolist(),
+                dtype=np.int32
+            )
+            # Shuffle outliers to avoid clustering
+            np.random.shuffle(outliers)
+        elif column in ['high_school_gpa', 'first_semester_gpa']:
+            # For GPAs, keep values between 0.0 and 5.0
+            low_outliers = np.random.uniform(
+                low=max(0, 0.5),
+                high=max(0, q1-0.5),
+                size=num_outliers // 2
+            )
+            high_outliers = np.random.uniform(
+                low=min(q3+0.5, 4.5),
+                high=5.0,
+                size=num_outliers - num_outliers // 2
+            )
+            outliers = np.concatenate([low_outliers, high_outliers])
+            outliers = np.array(outliers, dtype=np.float32)
+            # Shuffle outliers to avoid clustering
+            np.random.shuffle(outliers)
+        else:  # admission_exam_score   
+            # Ensure outliers are between 50 and 100
+            # For low outliers, use range between 50 and q1-5
+            low_outliers = list(range(50, max(51, int(q1-5))))
+            # For high outliers, use values close to 100
+            high_outliers = list(range(min(int(q3+5), 95), 100))
+            
+            # If there aren't enough values in the low range, use more from the high range
+            if len(low_outliers) == 0:
+                low_count = 0
+                high_count = num_outliers
+            else:
+                low_count = num_outliers // 2
+                high_count = num_outliers - low_count
+            
+            outliers = np.array(
+                np.random.choice(low_outliers, size=low_count).tolist() +
+                np.random.choice(high_outliers, size=high_count).tolist(),
+                dtype=np.int32
+            )
+            # Shuffle outliers to avoid clustering
+            np.random.shuffle(outliers)
+            
+        # Insert outliers
         df.loc[random.sample(range(len(df)), num_outliers), column] = outliers
     
     return df
