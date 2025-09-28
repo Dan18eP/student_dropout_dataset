@@ -1,22 +1,21 @@
 # STUDENT DROPOUT DATASET
 
-# Python version of the project
+### Python version of the project
 Python 3
 
-# create enviroment
+### create enviroment
 python -m venv venv
 
-# activate enviroment linux
+### activate enviroment linux
 source venv/bin/activate
 
-# activate enviroment windows
+### activate enviroment windows
 venv\Scripts\activate.bat
 
-
-# install requeriments
+### install requeriments
 pip  install -r requirements.txt 
 
-# run Script
+### run Script
 python main.py
 
 

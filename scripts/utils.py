@@ -16,19 +16,29 @@ OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "
 #Ensure reproducibility
 np.random.seed(42)
 
-#Some Functions
-def introduce_nulls(df, columns, null_percentage= random(0.05, 0.15)):
+def introduce_nulls(df, columns, null_percentage=None):
+    """
+    Introduce null values in specified columns with different random percentages for each column.
     
+    Args:
+        df: DataFrame to modify
+        columns: List of columns where to introduce nulls
+        null_percentage: Percentage of nulls (if None, randomly generated per column)
+    """
     total_rows = len(df)
     for column in columns:
-        num_nulls = int(total_rows * null_percentage)
+        # Generate different random percentage for each column
+        column_null_percentage = null_percentage if null_percentage is not None else random.uniform(0.05, 0.15)
+        
+        num_nulls = int(total_rows * column_null_percentage)
         null_indices = np.random.choice(df.index, num_nulls, replace=False)
         df.loc[null_indices, column] = np.nan
     return df
 
-#Introduce outliers in numerical columns based on data distribution
 def introduce_outliers(df, n_std=3, contamination_rate=0.05):
     """
+    Introduce outliers in numerical columns based on data distribution.
+    
     Args:
         df: DataFrame to modify
         n_std: Number of standard deviations to consider for outliers
@@ -49,23 +59,31 @@ def introduce_outliers(df, n_std=3, contamination_rate=0.05):
         
         #Generate outliers
         if column == 'age':
-            outliers = np.random.choice(
-                list(range(int(lower_bound-5), int(q1-2))) + 
-                list(range(int(q3+2), int(upper_bound+5))),
-                size=num_outliers
+            outliers = np.array(
+                np.random.choice(
+                    list(range(int(lower_bound-5), int(q1-2))) + 
+                    list(range(int(q3+2), int(upper_bound+5))),
+                    size=num_outliers
+                ),
+                dtype=np.int32
             )
         elif column == 'high_school_gpa':
-            outliers = np.random.uniform(
-                low=max(0, lower_bound-0.5),
-                high=min(5.0, upper_bound+0.5),
-                size=num_outliers
+            outliers = np.array(
+                np.random.uniform(
+                    low=max(0, lower_bound-0.5),
+                    high=min(5.0, upper_bound+0.5),
+                    size=num_outliers
+                ),
+                dtype=np.float32
             )
-        #admission_exam_score   
-        else:  
-            outliers = np.random.choice(
-                list(range(int(lower_bound-10), int(q1-5))) + 
-                list(range(int(q3+5), min(100, int(upper_bound+10)))),
-                size=num_outliers
+        else:  # admission_exam_score   
+            outliers = np.array(
+                np.random.choice(
+                    list(range(int(lower_bound-10), int(q1-5))) + 
+                    list(range(int(q3+5), min(100, int(upper_bound+10)))),
+                    size=num_outliers
+                ),
+                dtype=np.int32
             )
             
         #Insert outliers
