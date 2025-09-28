@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Path to dataset
 DATASET_PATH = Path(__file__).resolve().parent.parent / "data" / "dataset_dropout.csv"
@@ -35,6 +36,19 @@ def analyze_dataset(path=DATASET_PATH):
         print(df["dropout"].value_counts(dropna=False))
         rate = df["dropout"].mean() * 100
         print(f"Dropout rate: {rate:.2f}%")
+    
+    #Correlation matrix  when dropout== 1        
+    print("\n=== CORRELATION MATRIX ===")
+    print(df.corr(numeric_only=True)['dropout'])
+    
+    #Histograms
+    print("\n=== HISTOGRAMS ===")
+    df.hist(bins=20, figsize=(12, 8))
+    plt.tight_layout()
+    plt.show()
+    
+    
+
 
 # Run on import
 analyze_dataset()

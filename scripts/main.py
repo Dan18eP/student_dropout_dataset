@@ -80,7 +80,7 @@ def generate_dataset():
 
     #Financial data
     socioeconomic_level = np.random.choice([1, 2, 3, 4, 5, 6], NUM_RECORDS)
-    scholarship = np.random.choice([0, 1], NUM_RECORDS, p=[0.7, 0.3])  # 30% chance of having a scholarship
+    scholarship = np.random.choice([0, 1], NUM_RECORDS, p=[0.75, 0.25])  # 25% chance of having a scholarship
     loan = np.random.choice([0, 1], NUM_RECORDS, p=[0.6, 0.4])        # 40% chance of having a loan
     financial_aid = np.random.choice([0, 1], NUM_RECORDS, p=[0.8, 0.2]) # 20% chance of having financial aid
     print("[4] Generated financial data (socioeconomic level, scholarships, loans, aid)")
@@ -90,7 +90,7 @@ def generate_dataset():
     dropout_probs = []
 
     for i in range(NUM_RECORDS):
-        prob = 0.2  # base probability 20%
+        prob = 0.18  #base probability 18%
 
         # Academic factors
         if high_school_gpa[i] < 3.0:
@@ -99,10 +99,14 @@ def generate_dataset():
             prob += 0.35
 
         # Financial factors
-        if socioeconomic_level[i] == 'Low':
-            prob += 0.15
-        if scholarship[i] == 1:  # Has scholarship
-            prob -= 0.10
+        if socioeconomic_level[i] <= 2:  #Low socioeconomic level
+            prob += 0.20
+        if scholarship[i] == 1:  #Has scholarship
+            prob -= 0.25  #Scholarship helps reduce dropout
+        if loan[i] == 1:  #Has educational loan
+            prob += 0.15  #Loans can increase dropout risk
+        if financial_aid[i] == 1:  #Has additional financial aid
+            prob -= 0.15  #Financial aid helps reduce dropout
 
         # Geographic factors
         if origin[i] not in [ 'Barranquilla',
@@ -142,9 +146,6 @@ def generate_dataset():
         'dropout': dropout
     })
 
-    #Introduce nulls
-    df = introduce_nulls(df, ['gender', 'origin', 'high_school_gpa', 'first_semester_gpa'])
-    print("\n[5] Introduced null values in selected columns")
 
     #Introduce outliers
     df_before_outliers = df.copy()
@@ -158,8 +159,51 @@ def generate_dataset():
             print(f"\nOutliers in {column}:")
             print(f"Original values: {df_before_outliers.loc[outliers.index, column].values}")
             print(f"Modified values: {outliers.values}")
+            
+    #Round GPA columns
+    df['high_school_gpa'] = df['high_school_gpa'].round(2)
+    df['first_semester_gpa'] = df['first_semester_gpa'].round(2)
     
-    print("\n[6] Introduced outliers in numeric columns")
+    print("\n[5] Introduced outliers in numeric columns")
+    
+        
+    #Introduce nulls
+    df = introduce_nulls(df, ['gender', 'origin', 'high_school_gpa', 'first_semester_gpa', 'admission_exam_score'])
+    print("\n[6] Introduced null values in selected columns")
+    
+    #Validate and adjust extreme inconsistencies in dropout values
+    def validate_dropout(row):
+        #Case 1: Excellent performance and financial support -> unlikely to drop out
+        if (
+            row['high_school_gpa'] >= 4.0 and
+            row['first_semester_gpa'] >= 4.0 and
+            row['scholarship'] == 1 and
+            row['dropout'] == 1  # Only correct if currently mislabeled
+        ):
+            return 0  
+        
+        #Case 2: Very poor performance and no financial support -> high probability of dropout
+        if (
+            row['high_school_gpa'] < 2.0 and
+            row['first_semester_gpa'] < 2.0 and
+            row['scholarship'] == 0 and
+            row['dropout'] == 0  #Only correct if currently mislabeled
+        ):
+            return 1  
+        
+        #For all other cases, keep the original value
+        return row['dropout']
+
+    print("\n[7] Validated and adjusted dropout values for extreme inconsistencies")
+    
+    #Apply the validation function to adjust dropout values
+    df['dropout'] = df.apply(validate_dropout, axis=1)
+
+    print("\n[8] Applied dropout validation to the entire dataset")
+
+
+    
+    
     
     #Save to CSV
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)

@@ -90,7 +90,7 @@ STUDENT_DROPOUT_DATASET/
 - 500 synthetic records
 - Includes null values (5-15% per affected column)
 - Contains outliers in numerical variables
-- Simulates realistic patterns and relationships
+- Simulates close-realistic patterns and relationships
 
 ---
 
@@ -98,6 +98,7 @@ STUDENT_DROPOUT_DATASET/
 Detailed documentation for the project modules can be found in:
 - `/docs/main.md`: Documentation for main script functionality
 - `/docs/utils.md`: Documentation for utility functions and configurations
+- `/docs/dataset_visualization.md`: Documentation for statistical summaries, data quality assessment, and visualization components
 
 ## Usage
 1. Clone the repository
