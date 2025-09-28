@@ -149,7 +149,7 @@ financial_aid = np.random.choice([0, 1], NUM_RECORDS, p=[0.8, 0.2])
 ### **Probability Calculation Logic**
 ```python
 for i in range(NUM_RECORDS):
-    prob = 0.18  # Base probability 18%
+    prob = 0.16  # Base probability 16%
 
     # Academic factors
     if high_school_gpa[i] < 3.0:

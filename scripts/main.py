@@ -90,7 +90,7 @@ def generate_dataset():
     dropout_probs = []
 
     for i in range(NUM_RECORDS):
-        prob = 0.18  #base probability 18%
+        prob = 0.16  #base probability 16%
 
         # Academic factors
         if high_school_gpa[i] < 3.0:
