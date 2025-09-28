@@ -1,3 +1,25 @@
+# STUDENT DROPOUT DATASET
+
+# Python version of the project
+Python 3
+
+# create enviroment
+python -m venv venv
+
+# activate enviroment linux
+source venv/bin/activate
+
+# activate enviroment windows
+venv\Scripts\activate.bat
+
+
+# install requeriments
+pip  install -r requirements.txt 
+
+# run Script
+python main.py
+
+
 # Student Dropout Synthetic Dataset
 
 This repository focuses on generating a synthetic dataset that simulates university student dropout cases.  
